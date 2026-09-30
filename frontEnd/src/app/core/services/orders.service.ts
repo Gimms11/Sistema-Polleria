@@ -135,6 +135,13 @@ export class OrdersService {
       const combined = [...backendOrders, ...validLocal];
       const sorted = combined.sort((a, b) => Number(b.id) - Number(a.id));
       this.myOrders.set(sorted);
+
+      if (isPlatformBrowser(this.platformId) && validLocal.length !== pendingIds.length) {
+        try {
+          const validIds = sorted.map(o => o.id);
+          localStorage.setItem(this.getStorageKey(), JSON.stringify(validIds));
+        } catch {}
+      }
     });
   }
 
@@ -155,6 +162,13 @@ export class OrdersService {
       const valid = orders.filter((o): o is Order => !!o);
       const sorted = valid.sort((a, b) => Number(b.id) - Number(a.id));
       this.myOrders.set(sorted);
+
+      if (isPlatformBrowser(this.platformId) && valid.length !== localIds.length) {
+        try {
+          const validIds = valid.map(o => o.id);
+          localStorage.setItem(this.getStorageKey(), JSON.stringify(validIds));
+        } catch {}
+      }
     });
   }
 

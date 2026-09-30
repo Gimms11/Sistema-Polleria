@@ -22,7 +22,7 @@ public class ProductoController {
 
     private final ProductoService productoService;
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public ResponseEntity<List<ProductoResponse>> listar(
             @RequestParam(required = false) Categoria categoria,
             @RequestParam(defaultValue = "true") boolean soloDisponibles
@@ -35,7 +35,7 @@ public class ProductoController {
                 : productoService.listarTodos());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<ProductoResponse> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(productoService.obtener(id));
     }
