@@ -7,6 +7,46 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/api/auth/:path*",
+      "destination": "https://auth-service-264198079598.us-central1.run.app/auth/:path*"
+    },
+    {
+      "source": "/api/ordenes/:path*",
+      "destination": "https://orders-service-264198079598.us-central1.run.app/ordenes/:path*"
+    },
+    {
+      "source": "/api/productos/:path*",
+      "destination": "https://orders-service-264198079598.us-central1.run.app/productos/:path*"
+    },
+    {
+      "source": "/api/mesas/:path*",
+      "destination": "https://orders-service-264198079598.us-central1.run.app/mesas/:path*"
+    },
+    {
+      "source": "/api/pagos/:path*",
+      "destination": "https://payments-service-264198079598.us-central1.run.app/pagos/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://auth-service-264198079598.us-central1.run.app/auth/:path*"
+    },
+    {
+      "source": "/ordenes/:path*",
+      "destination": "https://orders-service-264198079598.us-central1.run.app/ordenes/:path*"
+    },
+    {
+      "source": "/productos/:path*",
+      "destination": "https://orders-service-264198079598.us-central1.run.app/productos/:path*"
+    },
+    {
+      "source": "/mesas/:path*",
+      "destination": "https://orders-service-264198079598.us-central1.run.app/mesas/:path*"
+    },
+    {
+      "source": "/pagos/:path*",
+      "destination": "https://payments-service-264198079598.us-central1.run.app/pagos/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

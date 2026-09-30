@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false)]
-    [string]$ProjectId = "tu-gcp-project-id",
+    [string]$ProjectId = "mitrufely",
 
     [Parameter(Mandatory = $false)]
     [string]$Region = "us-central1",
@@ -96,23 +96,57 @@ Write-Host "  - Max Instances: 2 (Proteccion de gasto)" -ForegroundColor Green
 Write-Host "  - Memoria: 512 MiB por contenedor" -ForegroundColor Green
 Write-Host "  - Facturacion: Unicamente por tiempo de CPU consumido durante peticiones activas" -ForegroundColor Green
 
-# 5. Comandos de despliegue por microservicio
+# 5. Cargar variables de entorno desde .env si existe
+$envFile = Join-Path $PSScriptRoot ".env"
+$envMap = @{}
+if (Test-Path $envFile) {
+    Get-Content $envFile | Where-Object { $_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$' } | ForEach-Object {
+        $envMap[$Matches[1]] = $Matches[2].Trim()
+    }
+}
+
+$dbUrl = $envMap["DB_URL"]
+$dbUser = $envMap["DB_USERNAME"]
+$dbPass = $envMap["DB_PASSWORD"]
+$jwtSec = $envMap["JWT_SECRET"]
+$cors = $envMap["CORS_ALLOWED_ORIGINS"]
+$mailUser = $envMap["MAIL_USERNAME"]
+$mailPass = $envMap["MAIL_PASSWORD"]
+
+# 6. Comandos de despliegue por microservicio
 Write-Host "`n[Paso 5/5] Comandos de despliegue generados:" -ForegroundColor Cyan
 
 $services = @("auth-service", "orders-service", "payments-service")
 foreach ($svc in $services) {
     $imgUri = "$repoPath/${svc}:latest"
-    Write-Host "`n  # Despliegue de $svc:" -ForegroundColor Yellow
+    $envVars = @(
+        "SPRING_PROFILES_ACTIVE=prod",
+        "DB_URL=$dbUrl",
+        "DB_USERNAME=$dbUser",
+        "DB_PASSWORD=$dbPass",
+        "JWT_SECRET=$jwtSec",
+        "CORS_ALLOWED_ORIGINS=$cors"
+    )
+    if ($svc -eq "auth-service") {
+        $envVars += "MAIL_USERNAME=$mailUser"
+        $envVars += "MAIL_PASSWORD=$mailPass"
+    }
+    $envVarStr = $envVars -join ","
+
+    Write-Host "`n  # Despliegue de ${svc}:" -ForegroundColor Yellow
     Write-Host "  gcloud run deploy $svc ``"
     Write-Host "    --image $imgUri ``"
     Write-Host "    $commonRunFlags ``"
-    Write-Host "    --set-env-vars `"SPRING_PROFILES_ACTIVE=prod`""
+    Write-Host "    --set-env-vars `"$envVarStr`""
+
+    if (-not $DryRun) {
+        Write-Host "`n  Ejecutando despliegue de $svc en Cloud Run..." -ForegroundColor Magenta
+        gcloud run deploy $svc --image $imgUri $commonRunFlags.Split(" ") --set-env-vars "$envVarStr" --project $ProjectId --quiet
+    }
 }
 
-if (-not $DryRun) {
-    Write-Host "`nIniciando ejecucion real de gcloud..." -ForegroundColor Magenta
-    # Ejecucion real solo cuando el usuario lo solicite explicitamente
-    # gcloud builds submit --config cloudbuild.yaml ...
+if ($DryRun) {
+    Write-Host "`n[CONFIGURACION FINALIZADA SATISFACTORIAMENTE (DRY-RUN)]" -ForegroundColor Green
 } else {
-    Write-Host "`n[CONFIGURACION FINALIZADA SATISFACTORIAMENTE]" -ForegroundColor Green
+    Write-Host "`n[DESPLIEGUE FINALIZADO EXITOSAMENTE]" -ForegroundColor Green
 }
