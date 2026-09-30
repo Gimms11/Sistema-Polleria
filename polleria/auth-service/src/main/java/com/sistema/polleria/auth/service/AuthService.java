@@ -32,8 +32,8 @@ public class AuthService {
     private final TwoFactorService twoFactorService;
     private final RefreshTokenService refreshTokenService;
 
-    // Roles que requieren 2FA (deshabilitado para POC — credenciales SMTP no configuradas)
-    private static final Set<Role> ROLES_WITH_2FA = Set.of();
+    // Roles que requieren 2FA obligatorio
+    private static final Set<Role> ROLES_WITH_2FA = Set.of(Role.ADMIN, Role.MOZO, Role.COCINA, Role.REPARTIDOR);
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {

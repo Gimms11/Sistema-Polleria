@@ -1,0 +1,58 @@
+steps:
+  # 1. Compilar todo el backend con Maven
+  - name: 'maven:3.9.9-eclipse-temurin-21'
+    entrypoint: 'mvn'
+    args: ['-B', 'clean', 'package', '-DskipTests']
+    dir: '.'
+
+  # 2. Construir imagen de auth-service
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/auth-service:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/auth-service:latest'
+      - '-f'
+      - 'auth-service/Dockerfile'
+      - '.'
+
+  # 3. Construir imagen de orders-service
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/orders-service:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/orders-service:latest'
+      - '-f'
+      - 'orders-service/Dockerfile'
+      - '.'
+
+  # 4. Construir imagen de payments-service
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/payments-service:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/payments-service:latest'
+      - '-f'
+      - 'payments-service/Dockerfile'
+      - '.'
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/auth-service:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/auth-service:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/orders-service:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/orders-service:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/payments-service:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/payments-service:latest'
+
+substitutions:
+  _REGION: 'us-central1'
+  _REPO: 'polleria-repo'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
