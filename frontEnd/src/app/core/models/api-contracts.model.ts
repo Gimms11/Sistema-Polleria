@@ -23,8 +23,19 @@ export interface BackendTwoFactorRequest {
   code: string;
 }
 
+export interface BackendRefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface BackendLogoutRequest {
+  refreshToken: string;
+}
+
 export interface BackendAuthResponse {
   token: string | null;
+  refreshToken?: string | null;
+  tokenType?: string | null;
+  expiresIn?: number | null;
   name: string | null;
   email: string;
   role: BackendRole;

@@ -69,6 +69,7 @@ public class OrdenController {
     }
 
     @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MOZO','COCINA','REPARTIDOR','CLIENTE')")
     public ResponseEntity<OrdenResponse> actualizarEstado(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarEstadoRequest request,

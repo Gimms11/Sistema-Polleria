@@ -3,7 +3,13 @@
 # Extensión: REST Client (humao.rest-client)
 ###############################################################################
 
-# Variables de URLs de Microservicios (AWS EC2)
+# Entorno: Localhost (descomentar para pruebas locales)
+# @AUTH_URL = http://localhost:8081
+# @ORDERS_URL = http://localhost:8082
+# @PAYMENTS_URL = http://localhost:8083
+# @NOTIF_URL = http://localhost:3001
+
+# Entorno: AWS EC2 / Cloudflare (activo)
 @AUTH_URL = http://98.86.149.179:8081
 @ORDERS_URL = http://100.53.223.167:8082
 @PAYMENTS_URL = http://44.203.62.89:8083
@@ -242,4 +248,25 @@ Authorization: Bearer {{TOKEN_ADMIN}}
 
 {
   "estado": "ESTADO_INEXISTENTE"
+}
+
+### 4.5 Refresh Token Invalido o Expirado (401)
+# Esperado: HTTP 401
+POST {{AUTH_URL}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "invalid-non-existent-token-12345"
+}
+
+### 4.6 Registro con Password Débil sin Números (400)
+# Esperado: HTTP 400
+POST {{AUTH_URL}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Password Debil",
+  "email": "debil@sanpollo.com",
+  "password": "sololetras",
+  "role": "CLIENTE"
 }

@@ -20,32 +20,32 @@ public class MesaController {
     private final MesaService mesaService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOZO')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MOZO', 'ROLE_ADMIN', 'ROLE_MOZO')")
     public ResponseEntity<List<MesaResponse>> listar() {
         return ResponseEntity.ok(mesaService.listarTodas());
     }
 
     @GetMapping("/libres")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOZO')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MOZO', 'ROLE_ADMIN', 'ROLE_MOZO')")
     public ResponseEntity<List<MesaResponse>> listarLibres() {
         return ResponseEntity.ok(mesaService.listarLibres());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOZO')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MOZO', 'ROLE_ADMIN', 'ROLE_MOZO')")
     public ResponseEntity<MesaResponse> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(mesaService.obtener(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<MesaResponse> crear(@RequestBody CrearMesaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mesaService.crear(request.getNumero(), request.getCapacidad()));
     }
 
     @PatchMapping("/{id}/estado")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOZO')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MOZO', 'ROLE_ADMIN', 'ROLE_MOZO')")
     public ResponseEntity<MesaResponse> actualizarEstado(
             @PathVariable Long id,
             @RequestBody ActualizarEstadoMesaRequest request
@@ -54,7 +54,7 @@ public class MesaController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         mesaService.eliminar(id);
         return ResponseEntity.noContent().build();

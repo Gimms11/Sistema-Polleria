@@ -50,6 +50,9 @@ export class AuthAdapter {
     return {
       user,
       token: dto.token || '',
+      refreshToken: dto.refreshToken || undefined,
+      tokenType: dto.tokenType || undefined,
+      expiresIn: dto.expiresIn || undefined,
       requires2FA: dto.requiresTwoFactor
     };
   }

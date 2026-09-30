@@ -56,9 +56,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/verify-2fa").permitAll()
+                        .requestMatchers("/auth/register", "/auth/login", "/auth/verify-2fa", "/auth/refresh", "/auth/logout").permitAll()
                         .requestMatchers("/auth/validate").authenticated()
                         .anyRequest().authenticated()
+                )
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.deny())
+                        .contentTypeOptions(contentType -> {})
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(ipBlacklistFilter, UsernamePasswordAuthenticationFilter.class)

@@ -25,5 +25,8 @@ export interface RegisterRequest {
 export interface AuthResponse {
   user: User;
   token: string;
+  refreshToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
   requires2FA?: boolean;
 }

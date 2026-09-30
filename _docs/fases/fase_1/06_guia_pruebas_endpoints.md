@@ -96,11 +96,14 @@ Content-Type: application/json
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
   "name": "Admin San Pollo",
   "email": "admin@sanpollo.com",
   "role": "ADMIN",
   "requiresTwoFactor": false,
-  "message": null
+  "message": "Registro exitoso"
 }
 ```
 
@@ -108,7 +111,7 @@ Content-Type: application/json
 ```bash
 curl -X POST http://localhost:8081/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Admin San Pollo","email":"admin@sanpollo.com","phone":"987654321","password":"admin123","role":"ADMIN"}'
+  -d '{"name":"Admin San Pollo","email":"admin@sanpollo.com","phone":"987654321","password":"adminPassword123","role":"ADMIN"}'
 ```
 
 ---
@@ -124,7 +127,7 @@ Content-Type: application/json
 ```json
 {
   "identifier": "admin@sanpollo.com",
-  "password": "admin123"
+  "password": "adminPassword123"
 }
 ```
 
@@ -134,21 +137,24 @@ Content-Type: application/json
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
   "name": "Admin San Pollo",
   "email": "admin@sanpollo.com",
   "role": "ADMIN",
   "requiresTwoFactor": false,
-  "message": null
+  "message": "Login exitoso"
 }
 ```
 
-> ⚠️ Si `requiresTwoFactor` es `true`, el `token` será `null`. Proceder con verify-2fa.
+> ⚠️ Si `requiresTwoFactor` es `true`, el `token` y `refreshToken` serán `null`. Proceder con verify-2fa.
 
 **cURL:**
 ```bash
 curl -X POST http://localhost:8081/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"identifier":"admin@sanpollo.com","password":"admin123"}'
+  -d '{"identifier":"admin@sanpollo.com","password":"adminPassword123"}'
 ```
 
 ---
@@ -170,9 +176,92 @@ Content-Type: application/json
 }
 ```
 
+**Respuesta esperada (200):**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
+  "name": "Admin San Pollo",
+  "email": "admin@sanpollo.com",
+  "role": "ADMIN",
+  "requiresTwoFactor": false,
+  "message": "Autenticación completada"
+}
+```
+
 ---
 
-### 3.4 Validar token
+### 3.4 Renovar Access Token (Refresh Token Rotation - RTR)
+
+```
+POST http://localhost:8081/auth/refresh
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+}
+```
+
+**Respuesta esperada (200):**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "f8e7d6c5-b4a3-2109-8765-4321fedcba98",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
+  "name": "Admin San Pollo",
+  "email": "admin@sanpollo.com",
+  "role": "ADMIN",
+  "requiresTwoFactor": false,
+  "message": "Token renovado exitosamente"
+}
+```
+
+**cURL:**
+```bash
+curl -X POST http://localhost:8081/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"}'
+```
+
+---
+
+### 3.5 Cerrar Sesión (Logout y Revocación)
+
+```
+POST http://localhost:8081/auth/logout
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "refreshToken": "f8e7d6c5-b4a3-2109-8765-4321fedcba98"
+}
+```
+
+**Respuesta esperada (200):**
+```json
+{
+  "message": "Sesión cerrada correctamente"
+}
+```
+
+**cURL:**
+```bash
+curl -X POST http://localhost:8081/auth/logout \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"f8e7d6c5-b4a3-2109-8765-4321fedcba98"}'
+```
+
+---
+
+### 3.6 Validar token (uso inter-servicio)
 
 ```
 GET http://localhost:8081/auth/validate

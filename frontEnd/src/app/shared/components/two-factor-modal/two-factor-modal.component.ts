@@ -50,6 +50,20 @@ import { NotificationService } from '../../../core/services/notification.service
             Hemos enviado un código de 6 dígitos al correo:
             <span class="font-semibold text-polleria-gold block mt-1 tracking-wide">{{ maskedEmail }}</span>
           </p>
+
+          <div *ngIf="isYopmail" class="pt-1">
+            <a 
+              [href]="yopmailUrl" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-500/15 border border-blue-400/40 text-blue-300 hover:text-white hover:bg-blue-500/25 text-xs rounded-lg transition font-medium cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+              <span>Abrir bandeja en Yopmail</span>
+            </a>
+          </div>
         </div>
 
         <!-- Form Body -->
@@ -147,6 +161,16 @@ export class TwoFactorModalComponent implements OnInit, OnDestroy, OnChanges {
     const name = parts[0];
     const masked = name.length > 2 ? `${name.substring(0, 2)}***${name.slice(-1)}` : `${name}***`;
     return `${masked}@${parts[1]}`;
+  }
+
+  get isYopmail(): boolean {
+    return !!this.email && this.email.toLowerCase().endsWith('@yopmail.com');
+  }
+
+  get yopmailUrl(): string {
+    if (!this.email) return 'https://yopmail.com';
+    const inbox = this.email.split('@')[0];
+    return `https://yopmail.com?login=${encodeURIComponent(inbox)}`;
   }
 
   get formattedTime(): string {

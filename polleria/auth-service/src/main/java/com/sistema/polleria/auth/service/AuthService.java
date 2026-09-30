@@ -30,6 +30,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final IpBlacklistService ipBlacklistService;
     private final TwoFactorService twoFactorService;
+    private final RefreshTokenService refreshTokenService;
 
     // Roles que requieren 2FA (deshabilitado para POC — credenciales SMTP no configuradas)
     private static final Set<Role> ROLES_WITH_2FA = Set.of();
@@ -56,8 +57,13 @@ public class AuthService {
         log.info("Usuario registrado: {} con rol {}", user.getEmail(), user.getRole());
 
         String token = jwtService.generateToken(user);
+        var refreshToken = refreshTokenService.createRefreshToken(user);
+
         return AuthResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken.getToken())
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getExpirationMs())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
@@ -110,9 +116,13 @@ public class AuthService {
 
         // Cliente/REPARTIDOR: login directo
         String token = jwtService.generateToken(user);
+        var refreshToken = refreshTokenService.createRefreshToken(user);
         log.info("Login exitoso para: {}", user.getEmail());
         return AuthResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken.getToken())
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getExpirationMs())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
@@ -136,16 +146,30 @@ public class AuthService {
 
         ipBlacklistService.resetFailedAttempts(ip);
         String token = jwtService.generateToken(user);
+        var refreshToken = refreshTokenService.createRefreshToken(user);
         log.info("Verificación 2FA exitosa para: {}", user.getEmail());
 
         return AuthResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken.getToken())
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getExpirationMs())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .requiresTwoFactor(false)
                 .message("Autenticación completada")
                 .build();
+    }
+
+    @Transactional
+    public AuthResponse refreshToken(com.sistema.polleria.auth.dto.RefreshTokenRequest request) {
+        return refreshTokenService.rotateRefreshToken(request.getRefreshToken());
+    }
+
+    @Transactional
+    public void logout(com.sistema.polleria.auth.dto.LogoutRequest request) {
+        refreshTokenService.revokeToken(request.getRefreshToken());
     }
 
     private String getClientIp(HttpServletRequest request) {

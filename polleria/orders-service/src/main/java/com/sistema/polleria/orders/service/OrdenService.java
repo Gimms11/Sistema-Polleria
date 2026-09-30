@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Slf4j
 @Service
@@ -132,23 +133,33 @@ public class OrdenService {
 
     private void validarTransicionEstado(OrdenEstado actual, OrdenEstado nuevo, OrdenTipo tipo) {
         if (actual == nuevo) return;
+
+        // Terminal states cannot be changed
+        if (actual == OrdenEstado.ENTREGADO || actual == OrdenEstado.CANCELADO) {
+            throw new IllegalArgumentException("Transición de estado inválida: " + actual + " → " + nuevo);
+        }
+
+        // Any active order can be cancelled
         if (nuevo == OrdenEstado.CANCELADO) return;
 
         boolean valido = switch (actual) {
-            case RECIBIDO -> true;
-            case EN_PREPARACION -> true;
-            case LISTO -> true;
+            case RECIBIDO -> nuevo == OrdenEstado.EN_PREPARACION;
+            case EN_PREPARACION -> nuevo == OrdenEstado.LISTO;
+            case LISTO -> (tipo == OrdenTipo.DELIVERY)
+                    ? (nuevo == OrdenEstado.EN_CAMINO || nuevo == OrdenEstado.ENTREGADO)
+                    : (nuevo == OrdenEstado.ENTREGADO);
             case EN_CAMINO -> nuevo == OrdenEstado.ENTREGADO;
-            case ENTREGADO -> true;
-            case CANCELADO -> false;
+            default -> false;
         };
+
         if (!valido) {
-            log.warn("Transición de estado administrativa: {} → {}", actual, nuevo);
+            log.warn("Transición de estado rechazada: {} → {} (tipo: {})", actual, nuevo, tipo);
+            throw new IllegalArgumentException("Transición de estado inválida: " + actual + " → " + nuevo);
         }
     }
 
     public Orden buscarOFallar(Long id) {
         return ordenRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Orden no encontrada: " + id));
     }
 }

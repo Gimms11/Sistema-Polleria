@@ -3,7 +3,13 @@
 # Extensión: REST Client (humao.rest-client)
 ###############################################################################
 
-# Variables de URLs de Microservicios (AWS EC2)
+# Entorno: Localhost (descomentar para pruebas locales)
+# @AUTH_URL = http://localhost:8081
+# @ORDERS_URL = http://localhost:8082
+# @PAYMENTS_URL = http://localhost:8083
+# @NOTIF_URL = http://localhost:3001
+
+# Entorno: AWS EC2 / Cloudflare (activo)
 @AUTH_URL = http://98.86.149.179:8081
 @ORDERS_URL = http://100.53.223.167:8082
 @PAYMENTS_URL = http://44.203.62.89:8083
@@ -54,15 +60,34 @@ Content-Type: application/json
   "password": "admin123"
 }
 
-### 2.1.3 Registrar Usuario CLIENTE
+### 2.1.2b Renovar Token con Refresh Token (RTR)
+# Esperado: HTTP 200
+# @name refreshTokenAdmin
+POST {{AUTH_URL}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{loginAdmin.response.body.refreshToken}}"
+}
+
+### 2.1.2c Logout y Revocación de Sesión
+# Esperado: HTTP 200
+POST {{AUTH_URL}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshTokenAdmin.response.body.refreshToken}}"
+}
+
+### 112.1.3 Registrar Usuario CLIENTE
 # Esperado: HTTP 201
 POST {{AUTH_URL}}/auth/register
 Content-Type: application/json
 
 {
   "name": "Juan Cliente",
-  "email": "cliente@sanpollo.com",
-  "phone": "912345678",
+  "email": "clienteMaria@sanpollo.com",
+  "phone": "912345672",
   "password": "cliente123",
   "role": "CLIENTE"
 }
@@ -74,7 +99,7 @@ POST {{AUTH_URL}}/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "cliente@sanpollo.com",
+  "identifier": "clienteMaria@sanpollo.com",
   "password": "cliente123"
 }
 
@@ -161,8 +186,8 @@ Content-Type: application/json
 Authorization: Bearer {{TOKEN_ADMIN}}
 
 {
-  "nombre": "Super pollo a la brasa",
-  "descripcion": "3 pollos a la brasa",
+  "nombre": "Super pollo a la brasa 2",
+  "descripcion": "4 pollos a la brasa",
   "precio": 200.50,
   "categoria": "PROMOCION",
   "imagenUrl": "https://images.unsplash.com/photo-1598103442097-8b74394b95c6",
@@ -197,7 +222,7 @@ Content-Type: application/json
 Authorization: Bearer {{TOKEN_ADMIN}}
 
 {
-  "numero": 10,
+  "numero": 11,
   "capacidad": 4
 }
 
@@ -342,24 +367,4 @@ Authorization: Bearer {{TOKEN_ADMIN}}
 
 {
   "estado": "CANCELADO"
-}
-
-### 2.6.7 Cancelar Pago Asociado (Cliente/Admin)
-# Esperado: HTTP 200
-PATCH {{PAYMENTS_URL}}/pagos/{{PAGO_ID}}/cancelar
-Authorization: Bearer {{TOKEN_CLIENTE}}
-
-
-# --- 2.7 Notificaciones WhatsApp ---
-
-### 2.7.1 Enviar Notificacion WhatsApp Directa
-# Esperado: HTTP 200
-POST {{NOTIF_URL}}/notificar
-Content-Type: application/json
-
-{
-  "telefono": "912345678",
-  "orderId": {{ORDEN_ID}},
-  "estado": "RECIBIDO",
-  "nombreCliente": "Juan Cliente"
 }

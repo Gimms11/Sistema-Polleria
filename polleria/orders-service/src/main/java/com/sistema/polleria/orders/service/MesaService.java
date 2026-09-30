@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Slf4j
 @Service
@@ -59,6 +60,6 @@ public class MesaService {
 
     public Mesa buscarOFallar(Long id) {
         return mesaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Mesa no encontrada: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Mesa no encontrada: " + id));
     }
 }

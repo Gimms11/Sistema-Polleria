@@ -44,6 +44,8 @@
 | 1.2 | Carta y Productos (`orders-service` → productos) | [02_carta_productos.md](./02_carta_productos.md) |
 | 1.3 | Pedidos y Estados (`orders-service` → órdenes) | [03_pedidos_estados.md](./03_pedidos_estados.md) |
 | 1.4 | Pagos (`payments-service`) | [04_pagos.md](./04_pagos.md) |
+| 1.5 | Referencia Rápida de Endpoints | [05_endpoints_referencia_rapida.md](./05_endpoints_referencia_rapida.md) |
+| 1.6 | Guía de Integración Frontend & Hardening | [07_guia_integracion_frontend_y_arquitectura.md](./07_guia_integracion_frontend_y_arquitectura.md) |
 
 ---
 

@@ -43,6 +43,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Credenciales inválidas", "status", 401));
     }
 
+    @ExceptionHandler(com.sistema.polleria.auth.exception.TokenRefreshException.class)
+    public ResponseEntity<Map<String, Object>> handleTokenRefresh(com.sistema.polleria.auth.exception.TokenRefreshException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", ex.getMessage(), "status", 401));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
         log.error("Error inesperado: ", ex);

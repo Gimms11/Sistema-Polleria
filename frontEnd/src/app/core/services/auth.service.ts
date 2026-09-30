@@ -18,6 +18,7 @@ export class AuthService {
   // Reactive State Signals
   readonly currentUser = signal<User | null>(null);
   readonly token = signal<string | null>(null);
+  readonly refreshToken = signal<string | null>(null);
   readonly isLoading = signal<boolean>(false);
 
   // Computed derivations
@@ -36,16 +37,27 @@ export class AuthService {
     this.restoreSession();
   }
 
+  getAccessToken(): string | null {
+    return this.token();
+  }
+
+  getRefreshToken(): string | null {
+    return this.refreshToken();
+  }
+
   private restoreSession(): void {
     if (isPlatformBrowser(this.platformId)) {
       const savedUser = localStorage.getItem('polleria_user');
       const savedToken = localStorage.getItem('polleria_token');
+      const savedRefreshToken = localStorage.getItem('polleria_refresh_token');
+
       if (savedUser && savedToken) {
         try {
           this.currentUser.set(JSON.parse(savedUser));
           this.token.set(savedToken);
+          this.refreshToken.set(savedRefreshToken || null);
         } catch {
-          this.logout();
+          this.forceLogout();
         }
       }
     }
@@ -119,14 +131,51 @@ export class AuthService {
   }
 
   /**
-   * RF03: Cerrar Sesión
+   * Renovación de tokens (Refresh Token Rotation - RTR)
+   */
+  refreshTokens(tokenToRefresh?: string): Observable<AuthResponse> {
+    const currentRefresh = tokenToRefresh || this.refreshToken();
+    if (!currentRefresh) {
+      return throwError(() => new Error('No refresh token disponible'));
+    }
+
+    return this.http.post<BackendAuthResponse>(`${this.API_URL}/auth/refresh`, {
+      refreshToken: currentRefresh
+    }).pipe(
+      map(dto => AuthAdapter.toAuthResponse(dto)),
+      tap(authResp => {
+        if (authResp.token) {
+          this.setSession(authResp);
+        }
+      })
+    );
+  }
+
+  /**
+   * RF03: Cerrar Sesión con revocación en backend
    */
   logout(): void {
+    const currentRefresh = this.refreshToken();
+    if (currentRefresh) {
+      // Intento de revocación en backend (fire and forget)
+      this.http.post(`${this.API_URL}/auth/logout`, { refreshToken: currentRefresh })
+        .subscribe({ error: () => {} });
+    }
+    this.forceLogout();
+  }
+
+  /**
+   * Cierre forzado de sesión en caso de expiración irreversible o detección de reuso
+   */
+  forceLogout(): void {
     this.currentUser.set(null);
     this.token.set(null);
+    this.refreshToken.set(null);
+
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('polleria_user');
       localStorage.removeItem('polleria_token');
+      localStorage.removeItem('polleria_refresh_token');
       localStorage.removeItem('polleria_my_order_ids');
     }
   }
@@ -134,9 +183,16 @@ export class AuthService {
   private setSession(auth: AuthResponse): void {
     this.currentUser.set(auth.user);
     this.token.set(auth.token);
+    if (auth.refreshToken) {
+      this.refreshToken.set(auth.refreshToken);
+    }
+
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('polleria_user', JSON.stringify(auth.user));
       localStorage.setItem('polleria_token', auth.token);
+      if (auth.refreshToken) {
+        localStorage.setItem('polleria_refresh_token', auth.refreshToken);
+      }
       localStorage.removeItem('polleria_my_order_ids');
     }
   }

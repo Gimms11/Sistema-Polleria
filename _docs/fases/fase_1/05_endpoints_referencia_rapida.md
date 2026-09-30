@@ -22,6 +22,8 @@ Tabla consolidada de todos los endpoints que el **frontend** debe consumir.
 | `POST` | `/auth/register` | 🔓 | — | Registro de nuevo usuario |
 | `POST` | `/auth/login` | 🔓 | — | Login (email o teléfono) |
 | `POST` | `/auth/verify-2fa` | 🔓 | — | Verificar código 2FA |
+| `POST` | `/auth/refresh` | 🔓 | — | Renovar access token (Refresh Token Rotation) |
+| `POST` | `/auth/logout` | 🔓 | — | Cerrar sesión (revocar refresh token) |
 | `GET` | `/auth/validate` | 🔒 | Cualquiera | Validar token (uso inter-servicio) |
 
 ---

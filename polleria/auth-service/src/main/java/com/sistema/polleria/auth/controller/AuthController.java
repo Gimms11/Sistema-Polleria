@@ -49,6 +49,23 @@ public class AuthController {
         return ResponseEntity.ok(authService.verifyTwoFactor(request, httpRequest));
     }
 
+    // POST /auth/refresh — Renovar access token vía refresh token
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @Valid @RequestBody com.sistema.polleria.auth.dto.RefreshTokenRequest request
+    ) {
+        return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
+    // POST /auth/logout — Revocar sesión y refresh token
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(
+            @Valid @RequestBody com.sistema.polleria.auth.dto.LogoutRequest request
+    ) {
+        authService.logout(request);
+        return ResponseEntity.ok(Map.of("message", "Sesión revocada exitosamente"));
+    }
+
     // GET /auth/validate  — usado por otros microservicios para validar el token
     @GetMapping("/validate")
     public ResponseEntity<Map<String, Object>> validateToken(HttpServletRequest request) {

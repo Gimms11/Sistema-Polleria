@@ -44,8 +44,13 @@ public class TwoFactorService {
                 .build();
 
         tokenRepository.save(token);
-        sendEmail(user.getEmail(), user.getName(), code);
-        log.info("Código 2FA enviado al correo: {}", user.getEmail());
+        try {
+            sendEmail(user.getEmail(), user.getName(), code);
+            log.info("Código 2FA enviado exitosamente al correo: {}", user.getEmail());
+        } catch (Exception e) {
+            log.warn("No se pudo conectar al servidor de correo para enviar a {}: {}. Código 2FA disponible para pruebas: [{}]",
+                    user.getEmail(), e.getMessage(), code);
+        }
     }
 
     @Transactional

@@ -54,13 +54,16 @@ POST /auth/register
 | `name` | `string` | ✅ | Max 100 chars |
 | `email` | `string` | ✅ | Formato email válido |
 | `phone` | `string` | ❌ | Max 20 chars, único |
-| `password` | `string` | ✅ | Min 6 chars |
+| `password` | `string` | ✅ | Min 6 chars, alfanumérico (al menos 1 letra y 1 número) |
 | `role` | `string` | ✅ | Enum: `CLIENTE`, `MOZO`, `COCINA`, `ADMIN`, `REPARTIDOR` |
 
 **Response `201 Created`:**
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
   "name": "Juan Pérez",
   "email": "juan@gmail.com",
   "role": "CLIENTE",
@@ -103,6 +106,9 @@ POST /auth/login
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
   "name": "Juan Pérez",
   "email": "juan@gmail.com",
   "role": "CLIENTE",
@@ -115,6 +121,9 @@ POST /auth/login
 ```json
 {
   "token": null,
+  "refreshToken": null,
+  "tokenType": null,
+  "expiresIn": null,
   "name": null,
   "email": "admin@sanpollo.pe",
   "role": "ADMIN",
@@ -151,6 +160,9 @@ POST /auth/verify-2fa
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
   "name": "Administrador",
   "email": "admin@sanpollo.pe",
   "role": "ADMIN",
@@ -167,7 +179,72 @@ POST /auth/verify-2fa
 
 ---
 
-### 4. Validar Token (uso inter-servicio)
+### 4. Renovación de Access Token (Refresh Token Rotation - RTR)
+
+```
+POST /auth/refresh
+```
+
+**Acceso:** Público (sin token Bearer, autentica con el `refreshToken`)
+
+**Request Body:**
+```json
+{
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "f8e7d6c5-b4a3-2109-8765-4321fedcba98",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
+  "name": "Juan Pérez",
+  "email": "juan@gmail.com",
+  "role": "CLIENTE",
+  "requiresTwoFactor": false,
+  "message": "Token renovado exitosamente"
+}
+```
+
+*Nota de seguridad:* Cada invocación revoca el refresh token previo y emite uno nuevo. Si un refresh token revocado es reutilizado, se activa la detección de reuso y se revocan inmediatamente todas las sesiones del usuario.
+
+**Errores:**
+| Código | Causa |
+| :--- | :--- |
+| `401` | `"Refresh token inválido o no encontrado"` |
+| `401` | `"Refresh token expirado"` |
+| `401` | `"Intento de reuso detectado en Refresh Token. Todas las sesiones activas han sido revocadas por seguridad"` |
+
+---
+
+### 5. Cierre de Sesión Seguro (Logout)
+
+```
+POST /auth/logout
+```
+
+**Acceso:** Público (invalida el `refreshToken` en base de datos)
+
+**Request Body:**
+```json
+{
+  "refreshToken": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Sesión cerrada correctamente"
+}
+```
+
+---
+
+### 6. Validar Token (uso inter-servicio)
 
 ```
 GET /auth/validate
@@ -196,9 +273,12 @@ GET /auth/validate
 
 ## Seguridad
 
-### JWT
-- Algoritmo: **HS256**
-- Expiración: configurable via `JWT_EXPIRATION_MS` (default: **24 horas**)
+### JWT y Refresh Tokens (Rotación y Detección de Reuso)
+- Algoritmo Access Token: **HS256**
+- Expiración Access Token: configurable via `JWT_EXPIRATION_MS` (default: **24 horas** dev / recomendado prod: 15 min)
+- Expiración Refresh Token: configurable via `JWT_REFRESH_EXPIRATION_MS` (default: **7 días**)
+- **Refresh Token Rotation (RTR):** En cada petición a `/auth/refresh`, el token actual se invalida y se genera uno nuevo.
+- **Detección Automática de Reuso:** Si un atacante intenta utilizar un refresh token revocado, el sistema detecta la anomalía e invalida automáticamente **todas** las sesiones activas del usuario afectado.
 - Claims: `sub` (email), `role`, `userId`
 - El mismo `JWT_SECRET` se comparte entre los 3 microservicios
 
@@ -224,24 +304,44 @@ const resp = await fetch('http://localhost:8081/auth/register', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     name: 'Juan', email: 'juan@gmail.com',
-    password: '123456', role: 'CLIENTE'
+    password: 'Password123', role: 'CLIENTE'
   })
 });
-const { token, name, email, role } = await resp.json();
-// Guardar token en localStorage para peticiones futuras
+const { token, refreshToken, name, email, role } = await resp.json();
+// Guardar token y refreshToken de forma segura (e.g., httpOnly cookie o storage cifrado)
 
 // Login
 const resp = await fetch('http://localhost:8081/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ identifier: 'juan@gmail.com', password: '123456' })
+  body: JSON.stringify({ identifier: 'juan@gmail.com', password: 'Password123' })
 });
 const data = await resp.json();
 if (data.requiresTwoFactor) {
   // Mostrar pantalla de verificación 2FA
 } else {
-  // Guardar data.token
+  // Guardar data.token y data.refreshToken
 }
+
+// Renovación periódica o en interceptor Axios / Fetch (401)
+const refreshResp = await fetch('http://localhost:8081/auth/refresh', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refreshToken })
+});
+if (refreshResp.ok) {
+  const newTokens = await refreshResp.json();
+  // Actualizar token y refreshToken con los nuevos valores
+} else {
+  // Redirigir a login (sesión expirada o comprometida)
+}
+
+// Cierre de Sesión (Logout)
+await fetch('http://localhost:8081/auth/logout', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refreshToken })
+});
 
 // Usar token en otros servicios
 headers: { 'Authorization': `Bearer ${token}` }
