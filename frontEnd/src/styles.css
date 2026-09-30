@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,12 +6,16 @@
 
 @layer base {
   :root {
-    --font-heading: 'Plus Jakarta Sans', sans-serif;
-    --font-display: 'Bebas Neue', 'Oswald', sans-serif;
+    --font-heading: "Plus Jakarta Sans", sans-serif;
+    --font-display: "Bebas Neue", "Oswald", sans-serif;
   }
-  
+
   html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family:
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
     scroll-behavior: smooth;
   }
 
@@ -51,7 +55,11 @@
 }
 
 .bg-radial-vignette {
-  background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
+  background: radial-gradient(
+    circle at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.75) 100%
+  );
 }
 
 .glass-panel {

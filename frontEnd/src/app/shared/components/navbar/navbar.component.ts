@@ -14,7 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
         
         <!-- Left: Brand Logo -->
         <a routerLink="/" class="flex items-center gap-2 group">
-          <span class="font-display text-3xl sm:text-4xl tracking-wider font-black text-polleria-crimson group-hover:brightness-110 transition leading-none">
+          <span class="font-display text-3xl sm:text-4xl tracking-wider font-black text-polleria-gold group-hover:brightness-110 transition leading-none">
             SAN POLLO
           </span>
         </a>
